@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reproductor de Video con Formularios</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+            padding: 30px;
+            max-width: 900px;
+            width: 100%;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+        }
+
+        .header h1 {
+            color: #333;
+            font-size: 1.8rem;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .progress-step {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #e0e0e0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #999;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+
+        .progress-step.active {
+            background: #667eea;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .progress-step.completed {
+            background: #4CAF50;
+            color: white;
+        }
+
+        .progress-step.completed::after {
+            content: '✓';
+            position: absolute;
+            font-size: 1.2rem;
+        }
+
+        .progress-step.completed span {
+            display: none;
+        }
+
+        .progress-line {
+            width: 40px;
+            height: 3px;
+            background: #e0e0e0;
+            align-self: center;
+            transition: all 0.3s ease;
+        }
+
+        .progress-line.active {
+            background: #4CAF50;
+        }
+
+        .video-section {
+            position: relative;
+            margin-bottom: 20px;
+            border-radius: 15px;
+            overflow: hidden;
+            background: #000;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+
+        video {
+            width: 100%;
+            display: block;
+            max-height: 450px;
+            background: #000;
+        }
+
+        .video-title {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 0.9rem;
+            backdrop-filter: blur(5px);
+        }
+
+        .info-message {
+            text-align: center;
+            padding: 15px;
+            background: #eef1ff;
+            border-radius: 10px;
+            color: #667eea;
+            font-weight: 600;
+            margin-top: 15px;
+            border-left: 4px solid #667eea;
+        }
+
+        .form-section {
+            display: none;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .form-section.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .form-container {
+            text-align: center;
+            padding: 30px;
+            background: #f8f9fa;
+            border-radius: 15px;
+            border-left: 5px solid #667eea;
+        }
+
+        .form-container h2 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 1.4rem;
+        }
+
+        .form-container p {
+            color: #666;
+            margin-bottom: 25px;
+            font-size: 1rem;
+            line-height: 1.6;
+        }
+
+        .btn-open-form {
+            display: inline-block;
+            padding: 15px 40px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-open-form:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px rgba(102, 126, 234, 0.5);
+        }
+
+        .btn-continue {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 12px 30px;
+            background: #4CAF50;
+            color: white;
+            text-decoration: none;
+            border-radius: 10px;
+            font-size: 1rem;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            border: none;
+            cursor: pointer;
+        }
+
+        .btn-continue:hover {
+            background: #45a049;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(76, 175, 80, 0.4);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        @media (max-width: 600px) {
+            .container { padding: 20px; }
+            .header h1 { font-size: 1.4rem; }
+            .progress-step { width: 35px; height: 35px; font-size: 0.9rem; }
+            .progress-line { width: 25px; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Encabezado con progreso -->
+        <div class="header">
+            <h1> Hospital Hanga Roa <br> Capacitacion generalidades enfermedad por virus Bundibugyo (EBOLA) </h1>
+            <div class="progress-bar" id="progressBar">
+                <div class="progress-step active" data-step="1"><span>1</span></div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="2"><span>2</span></div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="3"><span>3</span></div>
+                <div class="progress-line"></div>
+                <div class="progress-step" data-step="4"><span>4</span></div>
+            </div>
+        </div>
+
+        <!-- Sección de Video -->
+        <div class="video-section" id="videoSection">
+            <span class="video-title" id="videoTitle">Video 1</span>
+            <video id="videoPlayer" controls>
+                <source src="" type="video/mp4">
+                Tu navegador no soporta el elemento video.
+            </video>
+        </div>
+
+        <div class="info-message" id="infoMessage">
+            ⚠️ Debes ver el video completo para continuar. No se puede saltar.
+        </div>
+
+        <!-- Sección de Formulario -->
+        <div class="form-section" id="formSection">
+            <div class="form-container">
+                <h2> ¡Video completado!</h2>
+                <p>Haz clic en el botón para abrir el formulario de la prueba en una nueva pestaña.</p>
+                <a href="#" id="formLink" class="btn-open-form" target="_blank">
+                    Abrir Formulario 
+                </a>
+                <br>
+                <button id="btnContinue" class="btn-continue">
+                    ✓ Ya completé el formulario, continuar
+                </button>
+            </div>
+        </div>
+
+        <!-- Sección de Finalización -->
+        <div class="form-section" id="endSection">
+            <div class="form-container">
+                <h2> ¡Curso completado!</h2>
+                <p>Has terminado todos los videos y formularios. <br> ¡Conciencia y educación para cuidarnos mejor entre todos!</p>
+                <button id="btnRestart" class="btn-open-form">Volver a empezar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>	
+        // ============================================
+        // CONFIGURACIÓN DEL CURSO	
+        // Modifica estos datos para tu contenido
+        // ============================================
+        const courseData = [
+            {
+                type: 'video',
+                title: 'Video 1: Generalidades',
+                src: "https://ia801809.us.archive.org/16/items/generalidades-enfermedad-por-virus-bundibugyo/Generalidades%20enfermedad%20por%20virus%20Bundibugyo.mp4",
+                formUrl: 'https://forms.gle/LNKmwArkNjN3i3TQ8'
+                // ⬆️ Reemplaza esto con el enlace real de tu Google Form
+            },
+            {
+                type: 'video',
+                title: 'Video 2: EPP',
+                src: "https://ia903103.us.archive.org/22/items/instalacion-y-retiro-de-epp/Instalaci%C3%B3n%20y%20retiro%20de%20epp.mp4",
+                formUrl: 'https://forms.gle/tEDaR4KzZsw7M1ZW6'
+                // ⬆️ Reemplaza esto con el enlace real de tu segundo Google Form
+            }
+            // Puedes agregar más videos con sus formularios aquí
+        ];
+
+        // ============================================
+        // ESTADO DE LA APLICACIÓN
+        // ============================================
+        let currentStep = 0;
+
+        // Elementos del DOM
+        const videoSection = document.getElementById('videoSection');
+        const videoPlayer = document.getElementById('videoPlayer');
+        const videoTitle = document.getElementById('videoTitle');
+        const infoMessage = document.getElementById('infoMessage');
+        const formSection = document.getElementById('formSection');
+        const formLink = document.getElementById('formLink');
+        const btnContinue = document.getElementById('btnContinue');
+        const endSection = document.getElementById('endSection');
+        const btnRestart = document.getElementById('btnRestart');
+        const progressSteps = document.querySelectorAll('.progress-step');
+        const progressLines = document.querySelectorAll('.progress-line');
+
+        // ============================================
+        // FUNCIONES PRINCIPALES
+        // ============================================
+
+        function init() {
+            currentStep = 0;
+            updateProgress();
+            loadStep();
+        }
+
+        function loadStep() {
+            if (currentStep >= courseData.length) {
+                showEnd();
+                return;
+            }
+
+            const step = courseData[currentStep];
+            loadVideo(step);
+        }
+
+        function loadVideo(step) {
+            // Mostrar sección de video
+            videoSection.classList.remove('hidden');
+            infoMessage.classList.remove('hidden');
+            formSection.classList.remove('active');
+            endSection.classList.remove('active');
+
+            videoTitle.textContent = step.title;
+
+            // Bloquear el avance rápido (skip)
+            videoPlayer.src = step.src;
+            videoPlayer.load();
+
+            // Prevenir avance rápido (opcional)
+            videoPlayer.addEventListener('timeupdate', preventSkipping, false);
+            videoPlayer.addEventListener('seeking', preventSeeking, false);
+
+            // Cuando el video termine
+            videoPlayer.onended = function() {
+                // Quitar listeners de prevención
+                videoPlayer.removeEventListener('timeupdate', preventSkipping);
+                videoPlayer.removeEventListener('seeking', preventSeeking);
+                
+                // Mostrar sección de formulario
+                showForm(step);
+            };
+
+            // Reset
+            videoPlayer.currentTime = 0;
+        }
+
+        // Función para evitar saltar el video (opcional - bloquea adelantar)
+        let lastTime = 0;
+        function preventSkipping(e) {
+            // Si el usuario intenta adelantar más de 2 segundos de golpe, lo devolvemos
+            if (videoPlayer.currentTime > lastTime + 2 && !videoPlayer.seeking) {
+                videoPlayer.currentTime = lastTime;
+            } else {
+                lastTime = videoPlayer.currentTime;
+            }
+        }
+
+        function preventSeeking(e) {
+            // Si el usuario intenta arrastrar la barra, lo devolvemos
+            if (videoPlayer.seeking && videoPlayer.currentTime > lastTime + 2) {
+                videoPlayer.currentTime = lastTime;
+            }
+        }
+
+        function showForm(step) {
+            // Ocultar video
+            videoSection.classList.add('hidden');
+            infoMessage.classList.add('hidden');
+
+            // Configurar el enlace del formulario
+            formLink.href = step.formUrl;
+
+            // Mostrar sección de formulario
+            formSection.classList.add('active');
+
+            // Actualizar progreso (marcar paso como completado)
+            updateProgress();
+        }
+
+        function continueAfterForm() {
+            currentStep++;
+            updateProgress();
+            loadStep();
+        }
+
+        function showEnd() {
+            videoSection.classList.add('hidden');
+            infoMessage.classList.add('hidden');
+            formSection.classList.remove('active');
+            endSection.classList.add('active');
+
+            // Marcar todos como completados
+            progressSteps.forEach(step => {
+                step.classList.add('completed');
+                step.classList.remove('active');
+            });
+            progressLines.forEach(line => line.classList.add('active'));
+        }
+
+        function updateProgress() {
+            progressSteps.forEach((step, index) => {
+                step.classList.remove('active', 'completed');
+                if (index < currentStep) {
+                    step.classList.add('completed');
+                } else if (index === currentStep) {
+                    step.classList.add('active');
+                }
+            });
+
+            progressLines.forEach((line, index) => {
+                if (index < currentStep) {
+                    line.classList.add('active');
+                } else {
+                    line.classList.remove('active');
+                }
+            });
+        }
+
+        // ============================================
+        // EVENT LISTENERS
+        // ============================================
+        btnContinue.addEventListener('click', continueAfterForm);
+        btnRestart.addEventListener('click', init);
+
+        // ============================================
+        // INICIAR APLICACIÓN
+        // ============================================
+        init();
+    </script>
+</body>
+</html>
